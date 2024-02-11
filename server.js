@@ -1,5 +1,10 @@
-import express from 'express'
-import caesarCipher from './utils'
+const express = require('express');
+const crypto = require('crypto');
+const {
+  caesarCipher,
+  downloadTarFile,
+  makeGetRequest
+} = require('./utils');
 const { execSync } = require('child_process');
 const app = express()
 const port = 3000
@@ -7,24 +12,26 @@ const port = 3000
 app.get('/bac', (req, res) => {
   messages = [
     {
-      from: "Alan",
-      to: "James",
+      from: "alan",
+      to: "james",
       content: "sup doggie pup!"
     },
     {
-      from: "James",
-      to: "Alana",
+      from: "james",
+      to: "alan",
       content: "heyyy"
     },
     {
-      from: "Alana",
-      to: "Ashleigh",
+      from: "alana",
+      to: "ashleigh",
       content: "hey there"
     }
   ]
   const user = req.query.user.toLowerCase();
-  const inbox = messages.filter(m => [m.from, m.to].includes(user));
-  return inbox;
+  const inbox = messages.filter(m => {
+    return [m.from, m.to].includes(user)
+  });
+  res.json(inbox)
 })
 
 app.get('/crypto', (req, res) => {
@@ -51,27 +58,54 @@ app.get('/design', (req, res) => {
   }
 })
 
-// 1990s style username/password cookie sessions
+// Ancient 1990s style username/password cookie sessions
 app.get('/outdated', (req, res) => {
   const username = req.query.username
   const password = req.query.password
   res.cookie(username, password)
 })
 
+// doesn't check whether the password is correct!
 app.get('/auth', (req, res) => {
-  res.send('Hello World!')
+  const username = req.query.username
+  const password = req.query.password
+  let uuid = crypto.randomUUID();
+  res.send({ 'sessionCookie': uuid })
 })
 
 app.get('/integrity', (req, res) => {
-  res.send('Hello World!')
+  // Example usage:
+  const fileUrl = 'http://badapisite.example/';
+  const outputFile = 'download.tar';
+
+  try {
+    const downloadedFile = downloadTarFile(fileUrl, outputFile);
+    console.log('Downloaded file:', downloadedFile);
+  } catch (error) {
+    console.error('Error downloading file:', error);
+  }
 })
 
 app.get('/logging', (req, res) => {
-  res.send('Hello World!')
+  const username = req.query.username
+  const password = req.query.password
+  fs.appendFile(
+    'authlog', 
+    `User logged in: ${username}:${password}`, 
+    (err) => {
+      if (err) {
+        console.error('Error appending data to the file:', err);
+      } else {
+        console.log('Data was appended to the file successfully.');
+      }
+  });
+  res.end('You have logged in!')
 })
 
 app.get('/ssrf', (req, res) => {
-  res.send('Hello World!')
+  const url = req.query.url
+  makeGetRequest(url)
+  res.send('request made')
 })
 
 app.listen(port, () => {

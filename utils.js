@@ -1,4 +1,4 @@
-export default function caesarCipher(text, shift) {
+function caesarCipher(text, shift) {
   let result = '';
 
   for (let i = 0; i < text.length; i++) {
@@ -17,3 +17,43 @@ export default function caesarCipher(text, shift) {
 
   return result;
 }
+
+const https = require('https');
+const fs = require('fs');
+
+function downloadTarFile(fileUrl, outputFile) {
+  const file = fs.createWriteStream(outputFile);
+
+  return new Promise((resolve, reject) => {
+    const request = https.get(fileUrl, response => {
+      response.pipe(file);
+      file.on('finish', () => {
+        file.close(() => {
+          resolve(outputFile);
+        });
+      });
+    }).on('error', err => {
+      fs.unlink(outputFile, () => {}); // Delete the file if any error occurs
+      reject(err);
+    });
+  });
+}
+
+function makeGetRequest(url) {
+  return new Promise((resolve, reject) => {
+    https.get(url, (response) => {
+      let data = '';
+
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+
+      response.on('end', () => {
+        resolve(data);
+      });
+    }).on('error', (error) => {
+      reject(error);
+    });
+  });
+}
+
